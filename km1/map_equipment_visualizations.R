@@ -90,6 +90,30 @@ if (length(missing_data_regions) > 0) {
 }
 
 # --- 6. Create the Visualization ---
+# Define colors for the annotation
+color_vent <- "#1f77b4" # Blue
+color_ecmo <- "#2ca02c" # Green
+color_iso <- "#9467bd"  # Purple
+
+# Create a custom grob for the annotation (Top-Left Corner)
+# We use normalized coordinates (0-1) relative to the plot area
+weights_grob <- grid::grobTree(
+  # Line 1: Weights and values
+  grid::textGrob("Weights:", x = 0.02, y = 0.95, hjust = 0, gp = grid::gpar(fontsize = 12, fontface = "bold", col = "black")),
+  grid::textGrob("0.12", x = 0.12, y = 0.95, hjust = 0, gp = grid::gpar(fontsize = 14, fontface = "bold", col = color_vent)),
+  grid::textGrob("|", x = 0.17, y = 0.95, hjust = 0.5, gp = grid::gpar(fontsize = 12, col = "black")),
+  grid::textGrob("0.47", x = 0.22, y = 0.95, hjust = 0.5, gp = grid::gpar(fontsize = 14, fontface = "bold", col = color_ecmo)),
+  grid::textGrob("|", x = 0.27, y = 0.95, hjust = 0.5, gp = grid::gpar(fontsize = 12, col = "black")),
+  grid::textGrob("0.41", x = 0.32, y = 0.95, hjust = 0, gp = grid::gpar(fontsize = 14, fontface = "bold", col = color_iso)),
+  
+  # Line 2: Labels (aligned roughly with values)
+  grid::textGrob("Ventilators", x = 0.12, y = 0.91, hjust = 0, gp = grid::gpar(fontsize = 10, fontface = "bold", col = color_vent)),
+  grid::textGrob("|", x = 0.20, y = 0.91, hjust = 0.5, gp = grid::gpar(fontsize = 10, col = "black")),
+  grid::textGrob("ECMO", x = 0.22, y = 0.91, hjust = 0.5, gp = grid::gpar(fontsize = 10, fontface = "bold", col = color_ecmo)),
+  grid::textGrob("|", x = 0.27, y = 0.91, hjust = 0.5, gp = grid::gpar(fontsize = 10, col = "black")),
+  grid::textGrob("Isolation", x = 0.32, y = 0.91, hjust = 0, gp = grid::gpar(fontsize = 10, fontface = "bold", col = color_iso))
+)
+
 # Plot the map with a gradient fill for 'level_normalized'.
 ggplot(data = poland_map_data) +
   geom_sf(aes(fill = level_normalized), color = "white", size = 0.2) +
@@ -101,8 +125,8 @@ ggplot(data = poland_map_data) +
     guide = guide_colorbar(barwidth = 0.7, barheight = 15)
   ) +
   labs(
-    title = "Normalized Equipment Level by Voivodeship in Poland",
-    subtitle = "Based on 'level_normalized' from equipment_processed.csv",
+    title = "Medical Equipment Level by Voivodeship",
+    subtitle = "Normalized index (0-1 scale) comparing equipment availability relative to patient needs.\nHigher values indicate better equipment-to-patient ratios.",
     caption = "Data source: equipment_processed.csv"
   ) +
   theme_minimal() +
@@ -113,7 +137,10 @@ ggplot(data = poland_map_data) +
     axis.ticks = element_blank(),
     panel.grid = element_blank(),
     legend.position = "right"
-  )
+  ) +
+  coord_sf(clip = "off") + # Allow text to spill over if needed
+  # Add the custom annotation
+  annotation_custom(grob = weights_grob)
 
 # To save the plot to a file:
-# ggsave("poland_equipment_map.png", width = 10, height = 8, dpi = 300)
+ggsave("poland_equipment_map.png", width = 10, height = 8, dpi = 300)
